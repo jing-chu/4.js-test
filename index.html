@@ -4,9 +4,185 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
     <title>Js test</title>
+    <style>
+        #btn,#saveBtn {
+            width:15rem;
+            height:3rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        #input{
+            width:15rem;
+            height:3rem;
+            margin-top: 1rem;
+        }
+
+        #closeBtn {
+            cursor: pointer;
+            padding: 12px 16px;
+            font-size: 1rem;
+        }
+            
+    </style>
 </head>
+
 <body>
-    
+    <input id = "input" type="text"><span id="closeBtn"><i class="fas fa-times"></i></span>
+    <br>
+    <button id="btn" type = "button">Add to shopping list ()</button>
+    <p class= "alert"></p>
+    <table class = "table"></table>
+    <button id="saveBtn" type = "button">Save</button>
+    <script>
+        let btn = document.getElementById("btn");
+        let spinner = document.createElement("i");
+        let input = document.getElementById("input");
+        let alert = document.querySelector(".alert");
+        let table = document.querySelector("table");
+        let saveBtn = document.getElementById("saveBtn");
+        let closeBtn = document.getElementById("closeBtn");
+        let list=[];
+        let row; 
+        let cell1;                        
+        let cell2; 
+        let cell3; 
+        let copy = "";
+        btn.addEventListener("click",shoppingList);
+        saveBtn.addEventListener("click",saveList);
+        closeBtn.addEventListener("click",clearInput);
+
+        function clearInput(){
+            if(input.value != ""){
+                input.value = "";
+            }
+        }
+
+        function shoppingList() {
+            spinner.classList.add("fas");
+            spinner.classList.add("fa-spinner");
+            spinner.classList.add("fa-spin");
+            btn.prepend(spinner);                      
+            if(input.value == ""){
+                let timer = setTimeout(function(){               
+                    spinner.classList.remove("fas");
+                    spinner.classList.remove("fa-spinner");
+                    spinner.classList.remove("fa-spin");
+                    alert.innerHTML = "Error: Input should not be empty!"
+                } ,500); } else {
+                    alert.innerHTML = "";
+                    let timer = setTimeout(function(){               
+                        spinner.classList.remove("fas");
+                        spinner.classList.remove("fa-spinner");
+                        spinner.classList.remove("fa-spin");
+                        row = table.insertRow(-1); 
+                        cell1 =row.insertCell(0);                              
+                        cell2 =row.insertCell(1);
+                        cell3 =row.insertCell(2);                       
+                        cell1.innerHTML = input.value;                                                   
+                            for (let i=0; i<list.length; i++){
+                                if (input.value == list[i]){  //BUG HERE!!
+                                    alert.innerHTML = "Error: " +input.value + " has been added!" 
+                                    table.deleteRow(-1); 
+                                    list.pop();
+                                }
+                            }
+                        list.push(input.value); 
+                        console.log(list) 
+                        cell2.innerHTML = "<i class=\"fas fa-times\"></i>";
+                        cell3.innerHTML = "<input type=\"button\" value=\"Edit\" onclick=\"editCell()\">"
+                        if (input.value == "randomize" ){
+                            randomizeTable();
+                            table.deleteRow(-1); 
+                            list.pop();
+                        }     
+                        let amount = table.rows.length;
+                        cell2.addEventListener("click",function(){
+                            let td = event.target.parentNode;  // event.target will be cell2.
+                            let tr = td.parentNode; // the row to be removed
+                            tr.parentNode.removeChild(tr);
+                        });
+                        input.value = ""; 
+                        btn.innerHTML =  "Add to shopping list (" + amount + ")";
+                        for (let i = 0; i <=amount; i++){
+                            table.style.background = "linear-gradient(white , gray)";
+                        }
+                                 
+                } ,500);}              
+        }
+
+        function randomizeTable() {                        
+            let rowsCollection = table.querySelectorAll("tr");//1. get all rows                      
+            let rows = Array.from(rowsCollection).slice(1);//2. convert to array  
+            console.log(rowsCollection)       
+            shuffleArray(rows);//3. shuffle            
+            for (const row of rows) { //4. add back to the DOM
+                table.appendChild(row);
+            }
+        }
+
+        function shuffleArray(array) {
+            for (var i = array.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+        }
+
+        function editCell(){
+            let td = event.target.parentNode;  // event.target will be cell3.
+            let tr = td.parentNode; // the row to be removed
+            tr.firstChild.innerHTML = "<input id = \"inputCell\" type=\"text\" value=" + tr.firstChild.innerText + ">";
+            let inputCell = document.getElementById("inputCell");
+            inputCell.addEventListener("keyup",function(event){
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    tr.firstChild.innerHTML=inputCell.value;
+                }
+            });
+        }
+
+        input.addEventListener("keyup",function(event){
+                if (input.value == "clear" && event.keyCode === 13) {
+                    let parentEl = table.parentElement;
+                    parentEl.removeChild(table);
+                    input.value = "";
+                }
+                
+            });
+
+        function saveList(){
+            localStorage.setItem("key", JSON.stringify(list));
+        }
+
+        function reload(){
+            let reloadList = JSON.parse(localStorage.getItem("key"));
+            console.log(reloadList)
+            if(reloadList == null) return;
+            for (let i = 0; i < reloadList.length; i++){
+                let row = table.insertRow(-1);
+                let cell1 =row.insertCell(0);
+                let cell2 =row.insertCell(1);
+                cell1.innerHTML = reloadList[i];
+                cell2.innerHTML = "<i class=\"fas fa-times\"></i>";
+                let amount = table.rows.length;
+                cell2.addEventListener("click",function(){
+                    let td = event.target.parentNode;  // event.target will be the input element.
+                    let tr = td.parentNode; // the row to be removed
+                    tr.parentNode.removeChild(tr);
+                });
+                btn.innerHTML =  "Add to shopping list (" + amount + ")"
+            }
+            
+        }
+
+        reload()
+
+        
+    </script>
 </body>
+
 </html>
